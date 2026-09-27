@@ -23,7 +23,8 @@ export function advanceSession(session: Session): Session {
     };
   });
   for (const detection of result.detections) {
-    incidents = [...incidents, createIncident(detection.type, detection.startTime, samples, session.id, incidents.filter(i => i.sessionId === session.id).length + 1)];
+    const ordinal = Math.max(0, ...incidents.filter(i => i.sessionId === session.id).map(i => Number(i.id.split('-').at(-1)))) + 1;
+    incidents = [...incidents, createIncident(detection.type, detection.startTime, samples, session.id, ordinal)];
   }
   return { ...session, sim: step.state, samples, detector: result.state, incidents: incidents.slice(-12) };
 }

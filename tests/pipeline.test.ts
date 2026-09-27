@@ -99,10 +99,18 @@ test('storage roundtrip preserves complete recordings; malformed versions and fi
   assert.throws(()=>decodeSession(JSON.stringify({...s,version:9})));
   assert.throws(()=>decodeSession(JSON.stringify({...s,samples:[{timestamp:0}]})));
   assert.throws(()=>decodeSession(JSON.stringify({...s,incidents:[{...s.incidents[0],samples:[]}]})));
+  assert.throws(()=>decodeSession(JSON.stringify({...s,incidents:[{...s.incidents[0],evidence:[]}]})));
 });
 test('session is bounded at 10 minutes and retains at most 12 incidents',()=>{
   let s=advance(createSession(EPOCH,'bounded'),600);const snapshot=JSON.stringify(s);s=advance(s,5);
   assert.equal(s.samples.length,3000);assert.equal(JSON.stringify(s),snapshot);
   const incidents=run('wheel-slip').incidents;
   const next=createSession(EPOCH,'new',Array.from({length:20},()=>incidents[0]));assert.equal(next.incidents.length,12);
+});
+test('incident IDs remain unique after retention rotates beyond twelve incidents',()=>{
+  let s=advance(createSession(EPOCH,'retention'),10);
+  for(let n=0;n<15;n++){s=faultSession(s,'motor-stall');s=advance(s,23);}
+  assert.equal(s.incidents.length,12);
+  assert.equal(new Set(s.incidents.map(i=>i.id)).size,12);
+  assert.equal(s.incidents.at(-1)!.id,'retention-015');
 });
