@@ -21,6 +21,7 @@ The application is ready to run locally. A verified public deployment is not ava
 - Replays up to 30 seconds before detection and 10 seconds after it at 0.5×, 1×, or 2×.
 - Synchronizes the chart cursors, metrics, and robot position during replay.
 - Keeps the current session and the latest 12 incidents in browser storage.
+- Exports and imports validated JSON recordings for replay in another browser.
 
 There is no account setup, backend database, API key, or external AI service.
 
@@ -36,6 +37,22 @@ There is no account setup, backend database, API key, or external AI service.
 8. Return to the overview and try the other faults. A fault clears automatically after 18 simulated seconds. **Reset session** starts a fresh run and retains the incident archive.
 
 ![Motor stall: high current and low velocity](docs/screenshots/motor-stall.jpg)
+
+## Transfer a recording
+
+Pause the simulation and open **Recording files** below the incident history.
+**Export JSON** downloads the current session and its incident archive. In another
+browser, choose **Import JSON**, review the packet/incident counts, then apply the
+file. Applying replaces that browser's current session and archive; export the
+existing recording first if you want to keep it. **Cancel import** makes no changes.
+Imports start paused and can be resumed. Files are processed locally and are not
+uploaded to a server. The limit is 8 MiB; invalid files leave the existing session
+untouched. A storage quota failure shows a warning and keeps an exportable copy
+in memory.
+
+![Import review on desktop](docs/screenshots/recording-import-desktop.png)
+
+See [the short demo guide](docs/DEMO.md) and [verification results](docs/QA.md).
 
 ## Architecture
 
@@ -145,6 +162,8 @@ No environment variables are required. The small `scripts/dev.mjs` adapter accep
 | `src/components/incident-detail.tsx` | Replay controls, evidence, and timeline |
 | `src/app/incidents/[id]/page.tsx` | Dynamic incident route |
 | `tests/pipeline.test.ts` | Behavioral tests for the full pipeline |
+| `tests/recording.test.ts` | Recording transfer and invalid-file tests |
+| `tests/browser.mjs` | Production-server browser transfer/replay checks |
 | `docs/screenshots/` | Actual screenshots captured during browser QA |
 
 ## Testing
@@ -154,6 +173,16 @@ npm test
 npm run typecheck
 npm run build
 ```
+
+Browser checks (after the production build):
+
+```bash
+npx playwright install --with-deps chromium
+npm run test:browser
+```
+
+The browser script starts and stops its own production server on port 3100.
+Optional `CHROMIUM_PATH` selects an existing compatible Chromium executable.
 
 The tests cover physical relationships, deterministic output, all three fault signatures, detection without fault metadata, false-positive resistance, recovery/rearming, original-sample evidence, replay window bounds, persistence validation, archive preservation, retention, and session limits. See [QA notes](docs/QA.md) for browser checks and delivery status.
 
@@ -177,14 +206,14 @@ Suggested topics: `robotics`, `robotics-simulation`, `telemetry`, `anomaly-detec
 - Sessions stop after 10 simulated minutes; the latest 12 incidents are retained. A reset preserves incidents but ends incomplete post-event captures from the previous session.
 - Replay includes only available history. Early faults have less than 30 seconds of pre-event data. Pause/closing/resetting may leave the post-event window incomplete, which is labeled in the UI.
 - Replay holds the last received state across telemetry gaps; charts leave gaps rather than inventing samples.
-- Recordings stay in one browser and origin. Private browsing, clearing site data, or changing deployment domains can lose access. Links to incidents do not transfer their recordings to another device.
+- Browser storage belongs to one browser and origin. Private browsing, clearing site data, or changing domains can lose access. Use JSON export/import to transfer a recording; incident links alone do not transfer data.
 - Use one active tab per origin. Concurrent tabs can overwrite the shared recording. Browser timer throttling can slow simulated time in background tabs.
 - Persistence runs once per second and when pausing or leaving the page. Abrupt browser/process termination can lose the most recent samples. Storage failures display an in-memory fallback warning.
 - Detector thresholds are hand-selected for these scenarios. They are not validated against real robot datasets.
 
 ## Roadmap
 
-The core demo is intentionally small. Possible future work: export/import a recording, calibrate against measured motor data, and add an explicit no-packet timeout detector. These are not implemented features.
+The core demo is intentionally small. Next work: update dependencies with current security advisories before a public release, verify a deployment, calibrate against measured motor data, and add an explicit no-packet timeout detector. These are not implemented features. See [progress and backlog](docs/PROGRESS.md).
 
 ## License
 

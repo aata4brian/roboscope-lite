@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { ArrowRight, Check, CircleAlert, Clock3, MoveUpRight, Pause, Play, RotateCcw, Unplug, Waves, Zap } from 'lucide-react';
 import { useSession } from './session-provider';
 import { ChartGrid, Metrics, Trajectory } from './visuals';
+import { RecordingTransfer } from './recording-transfer';
 import { FAULT_DURATION, FAULT_LABELS, MAX_TICKS } from '@/lib/types';
 import type { FaultType } from '@/lib/types';
 import { missingPackets, timeLabel } from '@/lib/analysis';
@@ -35,6 +36,7 @@ export function Dashboard() {
     <section className="monitoring-grid"><ChartGrid samples={window} incidentTime={latest?.detectedAt}/><Trajectory samples={session.samples} sample={sample} incidents={session.incidents.filter(i=>i.sessionId===session.id)}/></section>
     <div className="stream-strip"><span><span className={running?'status-dot':'status-dot idle'}/>{running?'Receiving telemetry':sample?'Recording paused':'No telemetry yet'}</span><span className="mono">{missingPackets(session.samples)} dropped packets <span className="meta-separator"/> Seed 42 <span className="meta-separator"/> Browser storage</span></div>
     <section id="incidents" className="incidents-section"><div className="section-label"><h2>Incident history <span className="count-pill">{session.incidents.length}</span></h2><span>Latest 12 recordings</span></div><div className="incident-table-wrap"><table className="incident-table"><thead><tr><th>INCIDENT / TYPE</th><th>DETECTED · UTC</th><th>SEVERITY</th><th>RECORDING</th><th><span className="sr-only">Open</span></th></tr></thead><tbody>{[...session.incidents].reverse().map((i,index)=><tr key={i.id}><td><Link href={`/incidents/${i.id}`} className="incident-link"><span className={`incident-icon ${i.severity}`}><CircleAlert size={16}/></span><span><strong>{FAULT_LABELS[i.type]}</strong><small className="mono">INC-{i.id.slice(-3)} <span> / {i.sessionId}</span></small></span></Link></td><td className="mono">{timeLabel(i.detectedAt)}<small>{i.sessionId!==session.id?'Previous session':`T + ${i.robotState.elapsed.toFixed(1)} s`}</small></td><td><span className={`severity ${i.severity}`}>{i.severity}</span></td><td><span className="recording-status">{i.captureComplete?<Check size={13}/>:<Clock3 size={13}/>} {i.captureComplete?'Ready to replay':i.sessionId===session.id&&running?'Capturing post-event':'Partial window'}</span></td><td><Link href={`/incidents/${i.id}`} className="open-incident" aria-label={`Open ${FAULT_LABELS[i.type]} incident ${index+1}`}><ArrowRight size={17}/></Link></td></tr>)}</tbody></table>{!session.incidents.length?<div className="empty-incidents"><CircleAlert size={25}/><div><strong>No incidents detected</strong><p>{sample?'Inject a fault above. The detector will watch for a sustained sensor pattern.':'Start a simulation, then inject a fault to create your first incident.'}</p></div></div>:null}</div></section>
+    <RecordingTransfer/>
     <div className="bottom-note"><MoveUpRight size={14}/><span>Detections come from sensor patterns. Open an incident to inspect its evidence and replay the recording.</span></div>
   </>;
 }
