@@ -2,13 +2,14 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { advanceSession, createSession, faultSession } from '@/lib/session';
-import { decodeSession, STORAGE_KEY } from '@/lib/storage';
+import { decodeSession, encodeSession, STORAGE_KEY } from '@/lib/storage';
 import { DT, MAX_TICKS } from '@/lib/types';
 import type { FaultType, Session } from '@/lib/types';
 
 interface SessionContextValue {
   session: Session | null; ready: boolean; running: boolean; error: string | null;
   start: () => void; pause: () => void; reset: () => void; inject: (type: FaultType) => void;
+  importRecording: (recording: Session) => void;
 }
 const Context = createContext<SessionContextValue | null>(null);
 // getRandomValues also works on plain HTTP development origins.
@@ -55,7 +56,16 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const pause = () => { setRunning(false); save(); };
   const reset = () => { setRunning(false); blocked.current = false; commit(fresh(current.current?.incidents)); save(); };
   const inject = (type: FaultType) => { if (running && current.current && current.current.sim.tick >= 25) { commit(faultSession(current.current, type)); save(); } };
-  return <Context.Provider value={{session,ready,running,error,start,pause,reset,inject}}>{children}</Context.Provider>;
+  const importRecording = (recording: Session) => {
+    if (running) throw new Error('Pause the simulation before importing a recording.');
+    const checked = decodeSession(encodeSession(recording));
+    // Validate before changing state. A storage failure still leaves a playable in-memory copy.
+    blocked.current = false;
+    commit(checked);
+    lastSavedTick.current = -1;
+    save();
+  };
+  return <Context.Provider value={{session,ready,running,error,start,pause,reset,inject,importRecording}}>{children}</Context.Provider>;
 }
 export function useSession() {
   const context = useContext(Context);

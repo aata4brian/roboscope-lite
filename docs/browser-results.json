@@ -1,0 +1,16 @@
+{
+  "date": "2026-10-13",
+  "environment": "local production build, headless Chromium",
+  "checks": [
+    "Motor Stall: UI simulation → export → separate browser import → reload → replay at 2x",
+    "Wheel Slip: UI simulation → export → separate browser import → reload → replay at 2x",
+    "Network Degradation: UI simulation → export → separate browser import → reload → replay at 2x",
+    "Five invalid/oversized files leave the existing recording unchanged",
+    "Cancel import retains current session and archive",
+    "Dashboard/import preview and replay have no page overflow at 1440/1280/768/390px",
+    "Storage quota failure reports an in-memory fallback; imported recording remains exportable",
+    "Valid import recovers a corrupted browser recording and re-enables simulation",
+    "No uncaught browser errors"
+  ],
+  "uncaughtErrors": []
+}

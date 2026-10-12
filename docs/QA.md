@@ -4,6 +4,77 @@ This document separates observed behavior from checks that remain outstanding.
 Source is published in the public `aata4brian/roboscope-lite` GitHub repository.
 There is no verified public Vercel deployment yet.
 
+## Dependency maintenance — 13 October 2026
+
+Next.js was updated from 16.2.6 to 16.4.0 and the lockfile was refreshed for
+patched transitive releases. This reduced the production audit from six known
+advisories (1 moderate, 4 high, 1 critical) to none reported by npm at the time
+of this check.
+
+| Check | Observed result |
+| --- | --- |
+| clean `npm ci` | Passed |
+| `npm audit --omit=dev` | 0 advisories |
+| `npm test` | 23 passed, 0 failed |
+| `npm run typecheck` | Passed |
+| `npm run build` | Passed with Next.js 16.4.0 |
+| `git diff --check` | Passed |
+
+The local browser rerun did not start because no Chromium executable was
+present and the Playwright CDN download returned an empty archive in this
+environment. This is recorded as an environment limitation, not a passing
+browser result. The GitHub Actions workflow installs its own Chromium and must
+pass the existing nine-check suite on this branch before merge.
+
+## Recording transfer verification — 13 October 2026
+
+The latest branch adds recording export/import and strict validation. These are
+local results; there is still no verified public deployment.
+
+| Check | Observed result |
+| --- | --- |
+| `npm test` | 23 passed, 0 failed |
+| `npm run typecheck` | Passed |
+| `npm run build` | Passed |
+| `npm run test:browser` | All 9 reported browser checks passed |
+| `git diff --check` | Passed |
+| `npm audit --omit=dev` | 6 advisories at that checkpoint; resolved by the later dependency update above |
+
+The browser suite runs the production build using headless Chromium 153 and a
+controlled browser clock. It drives each fault from the UI, downloads the actual
+recording, imports it into a separate browser context, verifies unchanged JSON,
+reloads, opens the incident, and checks jump-to-detection and 2× playback.
+Simulation time is accelerated for testing; these are not wall-clock benchmarks.
+
+Other checks: five malformed/unsupported/oversized files leave existing storage
+unchanged; import cancellation preserves the current run; quota failure leaves an
+exportable in-memory recording; a valid import recovers corrupted local storage.
+The dashboard, import preview, and all three replay pages have no page overflow at
+1440, 1280, 768, and 390 px. No uncaught browser errors occurred. Screenshots of the
+import panel and motor-stall replay were captured and visually reviewed at desktop
+and mobile sizes. The table's hidden header previously escaped its scroll
+container at 390 px; a positioned wrapper fixes that specific cause.
+
+See `browser-results.json` for the recorded checks and `screenshots/` for captures.
+The CI workflow now runs type checking and the browser suite as well as tests/build.
+Remote CI status must be checked separately after pushing.
+
+Remaining checks: public deployment, real-time playback rate at 0.5×/1×/2×, slider
+drag/keyboard behavior across the whole window, and real hardware validation.
+The dependency advisories from this checkpoint were patched in the later update
+above. A clean audit is only one release check and does not prove an application
+has no security defects.
+
+References reviewed for this implementation (13 October 2026):
+
+- [MDN: Blob.text](https://developer.mozilla.org/en-US/docs/Web/API/Blob/text)
+- [MDN: URL.createObjectURL](https://developer.mozilla.org/en-US/docs/Web/API/URL/createObjectURL_static)
+- [MDN: localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage)
+
+These are API references. No third-party source code or design assets were copied.
+
+## Historical checks — September 2026
+
 ## Automated checks
 
 Final local verification on **2026-09-27**:
