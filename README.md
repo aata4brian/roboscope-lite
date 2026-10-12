@@ -213,7 +213,7 @@ Suggested topics: `robotics`, `robotics-simulation`, `telemetry`, `anomaly-detec
 
 ## Roadmap
 
-The core demo is intentionally small. Next work: update dependencies with current security advisories before a public release, verify a deployment, calibrate against measured motor data, and add an explicit no-packet timeout detector. These are not implemented features. See [progress and backlog](docs/PROGRESS.md).
+The core demo is intentionally small. Next work: verify a deployment, calibrate against measured motor data, and add an explicit no-packet timeout detector. These are not implemented features. Production dependencies were audited after the Next.js 16.4.0 update; see [QA notes](docs/QA.md) and the [progress backlog](docs/PROGRESS.md).
 
 ## License
 

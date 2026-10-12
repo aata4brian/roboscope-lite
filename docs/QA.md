@@ -4,6 +4,28 @@ This document separates observed behavior from checks that remain outstanding.
 Source is published in the public `aata4brian/roboscope-lite` GitHub repository.
 There is no verified public Vercel deployment yet.
 
+## Dependency maintenance — 13 October 2026
+
+Next.js was updated from 16.2.6 to 16.4.0 and the lockfile was refreshed for
+patched transitive releases. This reduced the production audit from six known
+advisories (1 moderate, 4 high, 1 critical) to none reported by npm at the time
+of this check.
+
+| Check | Observed result |
+| --- | --- |
+| clean `npm ci` | Passed |
+| `npm audit --omit=dev` | 0 advisories |
+| `npm test` | 23 passed, 0 failed |
+| `npm run typecheck` | Passed |
+| `npm run build` | Passed with Next.js 16.4.0 |
+| `git diff --check` | Passed |
+
+The local browser rerun did not start because no Chromium executable was
+present and the Playwright CDN download returned an empty archive in this
+environment. This is recorded as an environment limitation, not a passing
+browser result. The GitHub Actions workflow installs its own Chromium and must
+pass the existing nine-check suite on this branch before merge.
+
 ## Recording transfer verification — 13 October 2026
 
 The latest branch adds recording export/import and strict validation. These are
@@ -16,7 +38,7 @@ local results; there is still no verified public deployment.
 | `npm run build` | Passed |
 | `npm run test:browser` | All 9 reported browser checks passed |
 | `git diff --check` | Passed |
-| `npm audit --omit=dev` | 6 advisories: 1 moderate, 4 high, 1 critical; unresolved |
+| `npm audit --omit=dev` | 6 advisories at that checkpoint; resolved by the later dependency update above |
 
 The browser suite runs the production build using headless Chromium 153 and a
 controlled browser clock. It drives each fault from the UI, downloads the actual
@@ -39,8 +61,9 @@ Remote CI status must be checked separately after pushing.
 
 Remaining checks: public deployment, real-time playback rate at 0.5×/1×/2×, slider
 drag/keyboard behavior across the whole window, and real hardware validation.
-Dependency advisories must be reviewed and patched before a public deployment;
-this audit alone does not establish exploitability of every advisory in this app.
+The dependency advisories from this checkpoint were patched in the later update
+above. A clean audit is only one release check and does not prove an application
+has no security defects.
 
 References reviewed for this implementation (13 October 2026):
 

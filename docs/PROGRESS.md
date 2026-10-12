@@ -12,19 +12,20 @@ atau perubahan lokal pengguna saat checkout. Tidak ditemukan AGENTS.md.
 - Perbaikan halaman melebar pada ponsel karena elemen tersembunyi di tabel.
 - 23 tes perilaku; 9 pemeriksaan browser; typecheck/build; screenshot desktop/mobile.
 - CI menjalankan tes browser, panduan demo singkat, dan catatan hasil pemeriksaan.
+- Next.js 16.2.6 diperbarui ke 16.4.0 beserta dependensi transitif yang ditambal.
+- Audit dependensi produksi turun dari 6 advisori menjadi 0; 23 tes, typecheck,
+  build produksi, dan pemeriksaan diff lulus setelah instalasi bersih.
 
 ## Lanjutkan dari sini
 
-1. Review dan perbarui dependensi. Audit produksi menemukan 6 advisori
-   (1 moderate, 4 high, 1 critical); npm mengusulkan Next 16.4.0 untuk sebagian
-   perbaikan. Verifikasi release resmi, perbarui lockfile, lalu ulangi build dan
-   seluruh tes. Jangan deploy publik sebelum ini ditangani.
-2. Periksa CI PR ini dan gabungkan hanya setelah checks lulus.
-3. Verifikasi/import target RoboScope di Vercel tanpa membuat duplikat. Daftar
+1. Periksa CI PR ini, termasuk sembilan pemeriksaan browser, dan gabungkan hanya
+   setelah checks lulus. Browser lokal belum dapat diulang karena executable
+   Chromium tidak tersedia dan unduhan CDN menghasilkan arsip kosong.
+2. Verifikasi/import target RoboScope di Vercel tanpa membuat duplikat. Daftar
    proyek tim saat run ini hanya Amerta Pertiwi, Amerta Pertiwi v2, dan RxTwin;
    belum ada RoboScope. Tidak membuat deployment pada run ini.
-4. Selesaikan QA playback dengan waktu nyata dan interaksi slider keyboard/drag.
-5. Masukkan hasil dan demo terverifikasi ke portofolio setelah akses target jelas.
+3. Selesaikan QA playback dengan waktu nyata dan interaksi slider keyboard/drag.
+4. Masukkan hasil dan demo terverifikasi ke portofolio setelah akses target jelas.
 
 ## Temuan lintas repo, tanpa edit
 
