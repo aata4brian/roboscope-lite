@@ -15,10 +15,10 @@ export function Shell({ children }: { children: ReactNode }) {
       <Link href="/" className="brand"><span className="brand-mark"><CircuitBoard size={21}/></span><span>RoboScope<span className="lite">LITE</span></span></Link>
       <div className="workspace-label">WORKSPACE</div>
       <nav aria-label="Main navigation">
-        <Link href="/" className={!detail ? 'nav-link selected' : 'nav-link'}><LayoutDashboard size={17}/> Overview</Link>
-        <Link href="/#incidents" className={detail ? 'nav-link selected' : 'nav-link'}><ListFilter size={17}/> Incidents <span className="nav-count">{session?.incidents.length ?? 0}</span></Link>
+        <Link href="/" aria-label="Overview" aria-current={!detail ? 'page' : undefined} className={!detail ? 'nav-link selected' : 'nav-link'}><LayoutDashboard size={17}/> Overview</Link>
+        <Link href="/#incidents" aria-label="Incidents" aria-current={detail ? 'page' : undefined} className={detail ? 'nav-link selected' : 'nav-link'}><ListFilter size={17}/> Incidents <span className="nav-count">{session?.incidents.length ?? 0}</span></Link>
       </nav>
-      <div className="sidebar-device"><span className="tiny-label">CONNECTED ROBOT</span><div><Box size={19}/><strong>ROBOT-01</strong></div><p>Differential drive</p><span className="muted mono">r = 65 mm · b = 320 mm</span></div>
+      <div className="sidebar-device"><span className="tiny-label">SIMULATED ROBOT</span><div><Box size={19}/><strong>ROBOT-01</strong></div><p>Differential drive</p><span className="muted mono">r = 65 mm · b = 320 mm</span></div>
       <div className="sidebar-bottom"><span className="tiny-label">SIMULATION ENVIRONMENT</span><p><span className="status-dot"/> Local playground</p><span className="muted">Seed 42 · No hardware required</span><a href="https://github.com/aata4brian" target="_blank" rel="noreferrer">Built by Brian Baldan <ArrowUpRight size={13}/></a></div>
     </aside>
     <div className="main-shell">

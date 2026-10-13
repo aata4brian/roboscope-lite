@@ -29,22 +29,22 @@ export function TelemetryChart({title,unit,samples,lines,minimumMax,cursor,incid
   const last = cursor === undefined ? samples.at(-1) : [...samples].reverse().find(p=>p.timestamp<=cursor);
   return <article className="chart-card"><div className="chart-heading"><h3>{title} <span>{unit}</span></h3><span className="mono chart-reading">{last ? value(last,lines[0]).toFixed(unit==='ms'?0:2) : '—'}</span></div>
     <svg className="chart-svg" viewBox={`0 0 ${width} ${height}`} role="img" aria-labelledby={`${id}-title`}><title id={`${id}-title`}>{title} over time. {last ? `Current ${value(last,lines[0]).toFixed(2)} ${unit}.` : 'Waiting for telemetry.'}</title>
-      {[0,0.5,1].map(v=><g key={v}><line x1={left} x2={width-right} y1={y(v*yMax)} y2={y(v*yMax)} stroke="#283138" strokeDasharray="3 5"/><text x={left-9} y={y(v*yMax)+4} textAnchor="end" fill="#8b959b" fontSize="13">{(v*yMax).toFixed(yMax<3?1:0)}</text></g>)}
+      {[0,0.5,1].map(v=><g key={v}><line x1={left} x2={width-right} y1={y(v*yMax)} y2={y(v*yMax)} stroke="#dfe6ee" strokeDasharray="3 5"/><text x={left-9} y={y(v*yMax)+4} textAnchor="end" fill="#61758b" fontSize="13">{(v*yMax).toFixed(yMax<3?1:0)}</text></g>)}
       {incidentTime && incidentTime>=start && incidentTime<=end ? <rect x={x(incidentTime)} y={top} width={Math.max(0,width-right-x(incidentTime))} height={height-top-bottom} fill="#e5a951" opacity="0.05"/> : null}
       {lines.map(line=><path key={line.key} d={path(line)} fill="none" stroke={line.color} strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" strokeDasharray={line.key==='expected'?'4 4':undefined}/>)}
       {incidentTime && incidentTime>=start && incidentTime<=end ? <line x1={x(incidentTime)} x2={x(incidentTime)} y1={top} y2={height-bottom} stroke="#e5a951" strokeDasharray="3 4"/> : null}
-      {cursor !== undefined ? <line data-testid="chart-cursor" x1={x(Math.max(start,Math.min(end,cursor)))} x2={x(Math.max(start,Math.min(end,cursor)))} y1={top} y2={height-bottom} stroke="#e8edf1" strokeWidth="1.2"/> : null}
-      {[0,0.5,1].map(v=><text key={v} x={left+v*(width-left-right)} y={height-5} textAnchor={v===0?'start':v===1?'end':'middle'} fill="#8b959b" fontSize="13">{samples.length ? `${((start+v*(end-start)-(incidentTime ?? samples[0].timestamp))/1000).toFixed(0)}s` : `${v*60}s`}</text>)}
+      {cursor !== undefined ? <line data-testid="chart-cursor" x1={x(Math.max(start,Math.min(end,cursor)))} x2={x(Math.max(start,Math.min(end,cursor)))} y1={top} y2={height-bottom} stroke="#294a76" strokeWidth="1.2"/> : null}
+      {[0,0.5,1].map(v=><text key={v} x={left+v*(width-left-right)} y={height-5} textAnchor={v===0?'start':v===1?'end':'middle'} fill="#61758b" fontSize="13">{samples.length ? `${((start+v*(end-start)-(incidentTime ?? samples[0].timestamp))/1000).toFixed(0)}s` : `${v*60}s`}</text>)}
     </svg><div className="chart-legend">{lines.map(l=><span key={l.key}><i style={{background:l.color}}/>{l.label}</span>)}{!samples.length?<span className="chart-waiting">Awaiting stream</span>:null}</div>
   </article>;
 }
 export function ChartGrid({samples,cursor,incidentTime}:{samples:Telemetry[];cursor?:number;incidentTime?:number}) {
   const props={samples,cursor,incidentTime};
   return <div className="charts-grid">
-    <TelemetryChart {...props} title="Velocity" unit="m/s" minimumMax={0.8} lines={[{key:'linearVelocity',color:'#6ecbb6',label:'Actual'},{key:'expected',color:'#6a7885',label:'From wheel RPM'}]}/>
-    <TelemetryChart {...props} title="Motor current" unit="A" minimumMax={2} lines={[{key:'leftMotorCurrent',color:'#bc9bec',label:'Left motor'},{key:'rightMotorCurrent',color:'#697f96',label:'Right motor'}]}/>
-    <TelemetryChart {...props} title="Temperature" unit="°C" minimumMax={35} lines={[{key:'motorTemperature',color:'#e4a96b',label:'Motor temperature'}]}/>
-    <TelemetryChart {...props} title="Network latency" unit="ms" minimumMax={50} lines={[{key:'networkLatency',color:'#82b7e8',label:'Received packets'}]}/>
+    <TelemetryChart {...props} title="Velocity" unit="m/s" minimumMax={0.8} lines={[{key:'linearVelocity',color:'#078273',label:'Actual'},{key:'expected',color:'#7c90a7',label:'From wheel RPM'}]}/>
+    <TelemetryChart {...props} title="Motor current" unit="A" minimumMax={2} lines={[{key:'leftMotorCurrent',color:'#7b52bd',label:'Left motor'},{key:'rightMotorCurrent',color:'#3e7cba',label:'Right motor'}]}/>
+    <TelemetryChart {...props} title="Temperature" unit="°C" minimumMax={35} lines={[{key:'motorTemperature',color:'#ba761e',label:'Motor temperature'}]}/>
+    <TelemetryChart {...props} title="Network latency" unit="ms" minimumMax={50} lines={[{key:'networkLatency',color:'#2f72c4',label:'Received packets'}]}/>
   </div>;
 }
 export function Trajectory({samples,sample,incidents=[]}:{samples:Telemetry[];sample?:Telemetry;incidents?:Incident[]}) {
@@ -60,13 +60,13 @@ export function Trajectory({samples,sample,incidents=[]}:{samples:Telemetry[];sa
   const gridX=Array.from({length:Math.ceil((maxX-minX)/gridStep)+1},(_,i)=>Math.ceil(minX/gridStep)*gridStep+i*gridStep).filter(v=>v<=maxX);
   const gridY=Array.from({length:Math.ceil((maxY-minY)/gridStep)+1},(_,i)=>Math.ceil(minY/gridStep)*gridStep+i*gridStep).filter(v=>v<=maxY);
   return <article className="trajectory-card"><div className="panel-heading"><h3>Robot trajectory</h3><span className="tiny-label">TOP VIEW · m</span></div><svg viewBox={`0 0 ${width} ${height}`} className="trajectory-svg" role="img" aria-label="Robot trajectory in meters, with start, current position, and incident locations">
-    {gridX.map(v=><g key={`x${v}`}><line x1={x(v)} x2={x(v)} y1={20} y2={height-22} stroke={v===0?'#3b464b':'#222d32'}/><text x={x(v)} y={height-7} fill="#77858b" textAnchor="middle" fontSize="12">{v}</text></g>)}
-    {gridY.map(v=><g key={`y${v}`}><line x1={25} x2={width-15} y1={y(v)} y2={y(v)} stroke={v===0?'#3b464b':'#222d32'}/><text x={12} y={y(v)+3} fill="#77858b" textAnchor="middle" fontSize="12">{v}</text></g>)}
-    <path d={d} stroke="#72cbb6" fill="none" strokeWidth="2"/>
-    <circle cx={x(0)} cy={y(0)} r="4" fill="#151e23" stroke="#93a39f" strokeWidth="1.5"/>
-    <text x={x(0)+9} y={y(0)+16} fill="#9aa8aa" fontSize="12">START</text>
+    {gridX.map(v=><g key={`x${v}`}><line x1={x(v)} x2={x(v)} y1={20} y2={height-22} stroke={v===0?'#b4c3d2':'#e3e9f0'}/><text x={x(v)} y={height-7} fill="#60778e" textAnchor="middle" fontSize="12">{v}</text></g>)}
+    {gridY.map(v=><g key={`y${v}`}><line x1={25} x2={width-15} y1={y(v)} y2={y(v)} stroke={v===0?'#b4c3d2':'#e3e9f0'}/><text x={12} y={y(v)+3} fill="#60778e" textAnchor="middle" fontSize="12">{v}</text></g>)}
+    <path d={d} stroke="#087f70" fill="none" strokeWidth="2"/>
+    <circle cx={x(0)} cy={y(0)} r="4" fill="#ffffff" stroke="#667c94" strokeWidth="1.5"/>
+    <text x={x(0)+9} y={y(0)+16} fill="#526c85" fontSize="12">START</text>
     {incidents.filter(i=>!sample||i.detectedAt<=sample.timestamp).map(i=><g key={i.id}><circle cx={x(i.robotState.x)} cy={y(i.robotState.y)} r="7" fill="#d8a052" fillOpacity="0.15" stroke="#e6ad5b"/><title>{i.type}</title></g>)}
-    {sample?<g data-testid="robot-position" transform={`translate(${x(sample.x)},${y(sample.y)}) rotate(${-sample.heading*180/Math.PI})`}><circle r="11" fill="#6ecbb6" fillOpacity="0.13"/><path d="M 9 0 L -6 -6 L -3 0 L -6 6 Z" fill="#8de3cb" stroke="#121c1d" strokeWidth="1"/></g>:null}
-    {!sample?<text x={width/2} y={height/2-24} textAnchor="middle" fill="#8a979d" fontSize="12">Start simulation to plot the path</text>:null}
+    {sample?<g data-testid="robot-position" transform={`translate(${x(sample.x)},${y(sample.y)}) rotate(${-sample.heading*180/Math.PI})`}><circle r="11" fill="#6ecbb6" fillOpacity="0.13"/><path d="M 9 0 L -6 -6 L -3 0 L -6 6 Z" fill="#087f70" stroke="#ffffff" strokeWidth="1"/></g>:null}
+    {!sample?<text x={width/2} y={height/2-24} textAnchor="middle" fill="#58718a" fontSize="12">Start simulation to plot the path</text>:null}
   </svg><div className="trajectory-coordinates mono"><span>X <b>{sample?.x.toFixed(2)??'0.00'}</b></span><span>Y <b>{sample?.y.toFixed(2)??'0.00'}</b></span><span>θ <b>{sample?((sample.heading*180/Math.PI%360+360)%360).toFixed(1):'0.0'}°</b></span></div><div className="trajectory-legend"><span><i className="legend-path"/>Observed path</span><span><i className="legend-incident"/>Incident</span></div></article>;
 }
