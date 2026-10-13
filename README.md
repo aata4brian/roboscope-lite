@@ -20,6 +20,7 @@ Built by **Moch. Brian Mursyidan Baldan**, Robotics and Artificial Intelligence 
 - Records incidents with original samples, sensor timestamps, and before/after evidence.
 - Replays up to 30 seconds before detection and 10 seconds after it at 0.5×, 1×, or 2×.
 - Synchronizes the chart cursors, metrics, and robot position during replay.
+- Calculates replay progress from elapsed monotonic time, so delayed callbacks catch up instead of permanently slowing playback.
 - Keeps the current session and the latest 12 incidents in browser storage.
 - Exports and imports validated JSON recordings for replay in another browser.
 - Downloads incident telemetry as CSV for plotting in Excel or Python.
@@ -191,6 +192,8 @@ No environment variables are required. The small `scripts/dev.mjs` adapter accep
 | `tests/recording.test.ts` | Recording transfer and invalid-file tests |
 | `src/lib/incident-csv.ts` | Received-packet CSV export with units |
 | `tests/incident-csv.test.ts` | CSV data fidelity, gaps, and partial capture tests |
+| `src/lib/replay-clock.ts` | Elapsed-time replay position calculation |
+| `tests/replay-clock.test.ts` | Replay timing and speed-change tests |
 | `tests/browser.mjs` | Production-server browser transfer/replay checks |
 | `docs/screenshots/` | Actual screenshots captured during browser QA |
 
@@ -235,7 +238,7 @@ Suggested topics: `robotics`, `robotics-simulation`, `telemetry`, `anomaly-detec
 - Replay includes only available history. Early faults have less than 30 seconds of pre-event data. Pause/closing/resetting may leave the post-event window incomplete, which is labeled in the UI.
 - Replay holds the last received state across telemetry gaps; charts leave gaps rather than inventing samples.
 - Browser storage belongs to one browser and origin. Private browsing, clearing site data, or changing domains can lose access. Use JSON export/import to transfer a recording; incident links alone do not transfer data.
-- Use one active tab per origin. Concurrent tabs can overwrite the shared recording. Browser timer throttling can slow simulated time in background tabs.
+- Use one active tab per origin. Concurrent tabs can overwrite the shared recording. Browser timer throttling can slow the live simulator in background tabs. Replay uses elapsed `performance.now()` time and catches up on the next callback; screen updates still depend on browser scheduling. Operating-system sleep behavior depends on the browser/platform.
 - Persistence runs once per second and when pausing or leaving the page. Abrupt browser/process termination can lose the most recent samples. Storage failures display an in-memory fallback warning.
 - Detector thresholds are hand-selected for these scenarios. They are not validated against real robot datasets.
 

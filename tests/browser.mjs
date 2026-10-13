@@ -31,6 +31,7 @@ async function newPage() {
   const page = await context.newPage();
   page.on('pageerror', error => errors.push(error.message));
   await page.clock.install({ time: new Date('2026-10-13T00:00:00Z') });
+  await page.clock.pauseAt(new Date('2026-10-13T00:00:01Z'));
   await page.goto(base);
   await page.getByRole('button', { name: 'Start simulation' }).waitFor();
   return { context, page };
@@ -88,6 +89,80 @@ try {
     await target.page.clock.runFor(1000);
     assert.equal(Number(await target.page.getByRole('slider', { name: 'Replay position' }).inputValue()), recording.incidents[0].samples[0].timestamp + 2000);
     await target.page.getByRole('button', { name: 'Pause replay' }).click();
+    if (label === 'Motor Stall') {
+      const slider = target.page.getByRole('slider', { name: 'Replay position' });
+      const first = recording.incidents[0].samples[0].timestamp;
+      const last = recording.incidents[0].samples.at(-1).timestamp;
+      const cursor = async () => Number(await slider.inputValue());
+      for (const speed of [0.5, 1, 2]) {
+        await target.page.getByRole('button', { name: 'Rewind replay' }).click();
+        await target.page.getByRole('combobox', { name: 'Playback speed' }).selectOption(String(speed));
+        await target.page.getByRole('button', { name: 'Replay incident', exact: true }).click();
+        await target.page.clock.runFor(1000);
+        await target.page.getByRole('button', { name: 'Pause replay', exact: true }).click();
+        assert.equal(await cursor(), first + 1000 * speed);
+        await target.page.clock.runFor(500);
+        assert.equal(await cursor(), first + 1000 * speed);
+        await target.page.getByRole('button', { name: 'Replay incident', exact: true }).click();
+        await target.page.clock.runFor(1000);
+        await target.page.getByRole('button', { name: 'Pause replay', exact: true }).click();
+        assert.equal(await cursor(), first + 2000 * speed);
+      }
+      await target.page.getByRole('button', { name: 'Rewind replay' }).click();
+      await target.page.getByRole('combobox', { name: 'Playback speed' }).selectOption('1');
+      await target.page.getByRole('button', { name: 'Replay incident', exact: true }).click();
+      await target.page.clock.runFor(1000);
+      await target.page.getByRole('combobox', { name: 'Playback speed' }).selectOption('2');
+      await target.page.clock.runFor(1000);
+      await target.page.getByRole('button', { name: 'Pause replay', exact: true }).click();
+      assert.equal(await cursor(), first + 3000);
+      pass('Replay rates 0.5x/1x/2x, pause/resume and mid-play speed changes preserve elapsed time');
+
+      await target.page.getByRole('button', { name: 'Rewind replay' }).click();
+      await target.page.getByRole('button', { name: 'Replay incident', exact: true }).click();
+      await target.page.clock.fastForward(2000);
+      assert.equal(await cursor(), first + 4000);
+      await target.page.clock.setSystemTime(new Date('2030-01-01T00:00:00Z'));
+      await target.page.clock.runFor(1000);
+      await target.page.getByRole('button', { name: 'Pause replay', exact: true }).click();
+      assert.equal(await cursor(), first + 6000);
+      pass('A delayed timer catches up; changing the system clock does not jump the replay');
+
+      await slider.press('Home');
+      assert.equal(await cursor(), first);
+      await slider.press('End');
+      assert.equal(await cursor(), last);
+      await slider.press('ArrowLeft');
+      assert.equal(await cursor(), last - 100);
+      pass('Replay slider Home/End/ArrowLeft reaches recording boundaries and steps by 100 ms');
+
+      await target.page.getByRole('button', { name: 'Rewind replay' }).click();
+      await target.page.getByRole('button', { name: 'Replay incident', exact: true }).click();
+      await target.page.clock.runFor(1000);
+      await slider.scrollIntoViewIfNeeded();
+      const box = await slider.boundingBox();
+      assert.ok(box);
+      await target.page.mouse.move(box.x + box.width * 0.25, box.y + box.height / 2);
+      await target.page.mouse.down();
+      await target.page.mouse.move(box.x + box.width * 0.65, box.y + box.height / 2, { steps: 5 });
+      await target.page.mouse.up();
+      const scrubbed = await cursor();
+      assert.ok(scrubbed > first + (last - first) * 0.5 && scrubbed < last);
+      await target.page.getByRole('button', { name: 'Replay incident', exact: true }).waitFor();
+      await target.page.clock.runFor(1000);
+      assert.equal(await cursor(), scrubbed);
+      pass('Dragging the replay slider seeks within the recording and pauses playback');
+      await slider.press('End');
+      await target.page.getByRole('button', { name: 'Replay incident', exact: true }).click();
+      await target.page.clock.fastForward((last - first) / 2 + 500);
+      assert.equal(await cursor(), last);
+      await target.page.getByRole('button', { name: 'Replay incident', exact: true }).waitFor();
+      await target.page.getByRole('button', { name: 'Replay incident', exact: true }).click();
+      await target.page.clock.runFor(1000);
+      assert.equal(await cursor(), first + 2000);
+      await target.page.getByRole('button', { name: 'Pause replay', exact: true }).click();
+      pass('Playback clamps and stops at the final packet; replaying again restarts from the first');
+    }
     for (const width of [1440, 1280, 768, 390]) await noOverflow(target.page, width);
     if (label === 'Motor Stall') {
       await target.page.screenshot({ path: 'docs/screenshots/replay-mobile.png', fullPage: true });

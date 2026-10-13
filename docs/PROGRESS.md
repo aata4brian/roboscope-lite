@@ -1,7 +1,7 @@
 # Progres RoboScope Lite
 
-Checkpoint: 13 Oktober 2026. Branch kerja: `improve/incident-csv`.
-Dasar: main `2ab49b0`. Tidak ada perubahan lokal pengguna saat mulai.
+Checkpoint: 13 Oktober 2026. Branch kerja: `fix/replay-clock`.
+Dasar: main `6258aa4`. Tidak ada perubahan lokal pengguna saat mulai.
 
 ## Sudah selesai
 
@@ -13,7 +13,13 @@ Dasar: main `2ab49b0`. Tidak ada perubahan lokal pengguna saat mulai.
 - Preview portofolio diperiksa di desktop: gambar, filter, bahasa, tema, dan
   studi kasus. Produksi tetap memakai holding page; privasi tidak diubah.
 
-## Pekerjaan branch ini
+- PR #2 CSV sudah masuk main (`6258aa4`); 29 tes perilaku dan 12 pemeriksaan
+  browser lulus. Deployment publik diuji dengan CSV jaringan 177 baris/24 kolom;
+  semua 17 nilai cocok dengan JSON, 23 paket hilang tetap hilang, dan JSON setelah
+  ekspor/replay tidak berubah.
+- PR portofolio #2 masuk main (`be3158e`) untuk menyelaraskan bukti CSV.
+
+## Pekerjaan branch sebelumnya
 
 - Ekspor paket telemetri insiden ke CSV, tanpa interpolasi atau pembulatan.
 - Header mencantumkan satuan, waktu UTC, waktu relatif deteksi, dan status capture.
@@ -21,10 +27,16 @@ Dasar: main `2ab49b0`. Tidak ada perubahan lokal pengguna saat mulai.
 - 29 tes perilaku lulus; CI juga menguji unduhan CSV lewat tombol untuk tiga fault.
 - README dan panduan demo diperbarui sesuai deployment publik yang sudah diuji.
 
+## Pekerjaan branch ini
+
+- Replay mengikuti waktu monotonic yang berlalu, tidak menghitung jumlah callback.
+- Pause, seek, dan pergantian kecepatan mempertahankan posisi yang tepat.
+- 36 tes perilaku lulus. Browser CI menguji timer terlambat, tiga kecepatan,
+  perubahan jam sistem, serta kontrol slider keyboard dan mouse.
+
 ## Berikutnya
 
-- Periksa CI dan preview sebelum merge/release fitur CSV.
-- Lengkapi QA playback waktu nyata 0.5×/1× serta slider keyboard/drag.
+- Periksa browser CI dan deployment sebelum menyatakan perbaikan timing dirilis.
 - Tentukan jalur validasi hardware sebelum membuat klaim untuk robot fisik.
 - Proyek portofolio berikutnya yang Brian pilih: Predictive Maintenance for
   Aircraft Engines. Jangan mengklaim dataset, training, atau hasil sebelum diuji.

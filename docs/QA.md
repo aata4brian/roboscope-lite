@@ -6,6 +6,27 @@ Public demo: https://roboscope-lite.vercel.app/. Live smoke checks on 13 October
 2026 verified anonymous access, all three fault detections, motor-stall replay at
 2×, and reload persistence. Hardware validation remains outstanding.
 
+## Replay timing — 13 October 2026
+
+The old replay advanced by 100 ms per timer callback. When the browser delayed
+callbacks, the recording permanently fell behind. The new cursor is derived from
+an anchor position, speed, and elapsed `performance.now()` time. Pause, seeking,
+and speed changes re-anchor the playback; its cursor never exceeds the last
+received packet. A delayed callback catches up when it eventually executes.
+This does not force background screen updates or guarantee progress during OS
+sleep, whose monotonic-clock behavior varies by platform.
+
+Seven new behavioral tests cover irregular callbacks at 0.5×/1×/2×, deferred
+callbacks, end clamping, clock guards, and speed changes. The browser suite also
+checks all speed options, pausing, mid-play speed changes, delayed callbacks with
+`clock.fastForward`, system-clock changes, slider Home/End/ArrowLeft, and mouse
+scrubbing while playing. It retains the existing recording/CSV regressions.
+
+References: [performance.now](https://developer.mozilla.org/en-US/docs/Web/API/Performance/now)
+and [Playwright Clock](https://playwright.dev/docs/clock). Controlled-clock
+checks are deterministic regression tests, not device-performance benchmarks.
+Local behavioral count: 36. Browser CI results are recorded in the PR.
+
 ## CSV export — 13 October 2026
 
 The incident page now exports the received packet window as CSV. Six new tests
@@ -78,8 +99,9 @@ See `browser-results.json` for the recorded checks and `screenshots/` for captur
 The CI workflow now runs type checking and the browser suite as well as tests/build.
 Remote CI status must be checked separately after pushing.
 
-Remaining checks: public deployment, real-time playback rate at 0.5×/1×/2×, slider
-drag/keyboard behavior across the whole window, and real hardware validation.
+At that historical checkpoint, public deployment, playback-rate accuracy, slider
+drag/keyboard behavior, and real hardware validation remained outstanding.
+The dated sections above record subsequent work; real hardware validation remains open.
 The dependency advisories from this checkpoint were patched in the later update
 above. A clean audit is only one release check and does not prove an application
 has no security defects.

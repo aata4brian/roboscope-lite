@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Check, ChevronRight, CircleAlert, Download, Pause, Play, RotateCcw, ScanLine } from 'lucide-react';
 import { useSession } from './session-provider';
 import { ChartGrid, Metrics, Trajectory } from './visuals';
@@ -8,6 +8,8 @@ import { explainIncident, missingPackets, relativeTime, timeLabel } from '@/lib/
 import { FAULT_LABELS } from '@/lib/types';
 import type { Incident } from '@/lib/types';
 import { incidentCsv } from '@/lib/incident-csv';
+import { replayPosition } from '@/lib/replay-clock';
+import type { ReplayAnchor } from '@/lib/replay-clock';
 
 export function IncidentDetail({ id }:{id:string}) {
   const {session,ready}=useSession();
@@ -23,6 +25,28 @@ function Replay({incident}:{incident:Incident}) {
   const [cursor,setCursor]=useState(first);
   const [playing,setPlaying]=useState(false);
   const [speed,setSpeed]=useState(1);
+  const position = useRef(first);
+  const anchor = useRef<ReplayAnchor | null>(null);
+  function moveCursor(value: number) {
+    position.current = value;
+    setCursor(value);
+  }
+  function seek(value: number) {
+    anchor.current = null;
+    setPlaying(false);
+    moveCursor(value);
+  }
+  function pausePlayback() {
+    if (anchor.current) moveCursor(replayPosition(anchor.current, performance.now(), last));
+    anchor.current = null;
+    setPlaying(false);
+  }
+  function changeSpeed(value: number) {
+    if (value === speed) return;
+    if (anchor.current) moveCursor(replayPosition(anchor.current, performance.now(), last));
+    anchor.current = null;
+    setSpeed(value);
+  }
   const [exportMessage, setExportMessage] = useState('');
   const [exportError, setExportError] = useState('');
   function exportCsv() {
@@ -44,14 +68,25 @@ function Replay({incident}:{incident:Incident}) {
   }
   useEffect(()=>{
     if(!playing)return;
-    const timer=setInterval(()=>setCursor(t=>Math.min(last,t+100*speed)),100);
-    return()=>clearInterval(timer);
+    anchor.current = { cursor: position.current, startedAt: performance.now(), speed };
+    const timer = setInterval(() => {
+      if (!anchor.current) return;
+      const next = replayPosition(anchor.current, performance.now(), last);
+      position.current = next;
+      setCursor(next);
+    }, 100);
+    return () => {
+      clearInterval(timer);
+      // Preserve elapsed time when capture extends the end of the recording.
+      if (anchor.current) position.current = replayPosition(anchor.current, performance.now(), last);
+      anchor.current = null;
+    };
   },[playing,speed,last]);
-  useEffect(()=>{if(cursor>=last)setPlaying(false);},[cursor,last]);
+  useEffect(()=>{if(cursor>=last){anchor.current=null;setPlaying(false);}},[cursor,last]);
   const sample=[...samples].reverse().find(p=>p.timestamp<=cursor)??samples[0];
   const gap=cursor-sample.timestamp>300;
   const analysis=explainIncident(incident);
-  const startPlayback=()=>{if(cursor>=last)setCursor(first);setPlaying(true);};
+  const startPlayback=()=>{if(position.current>=last)moveCursor(first);setPlaying(true);};
   const before=(incident.detectedAt-first)/1000,after=(last-incident.detectedAt)/1000;
   const capturing=!incident.captureComplete&&session?.id===incident.sessionId&&running;
   const canResume=session?.id===incident.sessionId;
@@ -60,7 +95,7 @@ function Replay({incident}:{incident:Incident}) {
     <Link className="back-link" href="/"><ArrowLeft size={14}/> Back to overview</Link>
     <div className="page-heading detail-heading"><div><div className="eyebrow">INCIDENT ANALYSIS <span className="mono">/ INC-{incident.id.slice(-3)}</span></div><h1>{FAULT_LABELS[incident.type]} <span className={`severity ${incident.severity}`}>{incident.severity}</span></h1><p>ROBOT-01 <span className="meta-separator"/> Detected {timeLabel(incident.detectedAt)} UTC <span className="meta-separator"/> Session <span className="mono">{incident.sessionId}</span></p></div><span className="analysis-badge"><ScanLine size={15}/> Evidence-based diagnosis</span></div>
     <section className="replay-panel"><div className="replay-top"><div><div className="eyebrow">INCIDENT REPLAY</div><p>{before.toFixed(1)} s before <span className="meta-separator"/> {after.toFixed(1)} s after detection</p></div><div className="replay-clock"><strong className="mono" data-testid="replay-clock">{timeLabel(cursor)}.{String(Math.floor(cursor%1000/100))}</strong><span className="mono">{relativeTime(cursor,incident.detectedAt)}</span></div></div>
-      <div className="replay-controls"><button className="button primary" onClick={playing?()=>setPlaying(false):startPlayback}>{playing?<Pause size={15}/>:<Play size={15}/>} {playing?'Pause replay':'Replay incident'}</button><button className="button icon-button" aria-label="Rewind replay" onClick={()=>{setPlaying(false);setCursor(first);}}><RotateCcw size={16}/></button><div className="scrubber"><input type="range" aria-label="Replay position" min={first} max={last} step={100} value={Math.min(cursor,last)} onChange={e=>{setPlaying(false);setCursor(Number(e.target.value));}}/><div className="scrubber-labels mono"><span>{relativeTime(first,incident.detectedAt)}</span><button onClick={()=>{setPlaying(false);setCursor(incident.detectedAt);}}>Jump to detection</button><span>{relativeTime(last,incident.detectedAt)}</span></div></div><label className="speed-select"><span className="sr-only">Playback speed</span><select aria-label="Playback speed" value={speed} onChange={e=>setSpeed(Number(e.target.value))}><option value={0.5}>0.5×</option><option value={1}>1×</option><option value={2}>2×</option></select></label></div>
+      <div className="replay-controls"><button className="button primary" onClick={playing?pausePlayback:startPlayback}>{playing?<Pause size={15}/>:<Play size={15}/>} {playing?'Pause replay':'Replay incident'}</button><button className="button icon-button" aria-label="Rewind replay" onClick={()=>seek(first)}><RotateCcw size={16}/></button><div className="scrubber"><input type="range" aria-label="Replay position" min={first} max={last} step={100} value={Math.min(cursor,last)} onChange={e=>seek(Number(e.target.value))}/><div className="scrubber-labels mono"><span>{relativeTime(first,incident.detectedAt)}</span><button onClick={()=>seek(incident.detectedAt)}>Jump to detection</button><span>{relativeTime(last,incident.detectedAt)}</span></div></div><label className="speed-select"><span className="sr-only">Playback speed</span><select aria-label="Playback speed" value={speed} onChange={e=>changeSpeed(Number(e.target.value))}><option value={0.5}>0.5×</option><option value={1}>1×</option><option value={2}>2×</option></select></label></div>
       {!incident.captureComplete||before<29.9||gap?<div className="replay-note">{gap?'Telemetry gap: holding the last received state. ':''}{capturing?'Capturing post-event telemetry in the background. ':!incident.captureComplete?(canResume?'Partial recording: resume the source session to capture more post-event data. ':'Partial recording: the source session ended before post-event capture completed. '):''}{before<29.9?'Less than 30 seconds of pre-event history was available.':''}</div>:null}
     </section>
     <section className="recording-transfer" aria-label="Incident data export">
