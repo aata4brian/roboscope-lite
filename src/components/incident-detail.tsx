@@ -1,12 +1,13 @@
 'use client';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Check, ChevronRight, CircleAlert, Pause, Play, RotateCcw, ScanLine } from 'lucide-react';
+import { ArrowLeft, Check, ChevronRight, CircleAlert, Download, Pause, Play, RotateCcw, ScanLine } from 'lucide-react';
 import { useSession } from './session-provider';
 import { ChartGrid, Metrics, Trajectory } from './visuals';
 import { explainIncident, missingPackets, relativeTime, timeLabel } from '@/lib/analysis';
 import { FAULT_LABELS } from '@/lib/types';
 import type { Incident } from '@/lib/types';
+import { incidentCsv } from '@/lib/incident-csv';
 
 export function IncidentDetail({ id }:{id:string}) {
   const {session,ready}=useSession();
@@ -22,6 +23,25 @@ function Replay({incident}:{incident:Incident}) {
   const [cursor,setCursor]=useState(first);
   const [playing,setPlaying]=useState(false);
   const [speed,setSpeed]=useState(1);
+  const [exportMessage, setExportMessage] = useState('');
+  const [exportError, setExportError] = useState('');
+  function exportCsv() {
+    setExportError('');
+    setExportMessage('');
+    try {
+      const url = URL.createObjectURL(new Blob([incidentCsv(incident)], { type: 'text/csv;charset=utf-8' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `roboscope-${incident.id}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setExportMessage(`Exported ${samples.length} received packets. ${incident.captureComplete ? 'Complete capture.' : 'Partial capture; export again after recording finishes.'}`);
+    } catch {
+      setExportError('Unable to export CSV. Your recording has not changed.');
+    }
+  }
   useEffect(()=>{
     if(!playing)return;
     const timer=setInterval(()=>setCursor(t=>Math.min(last,t+100*speed)),100);
@@ -42,6 +62,13 @@ function Replay({incident}:{incident:Incident}) {
     <section className="replay-panel"><div className="replay-top"><div><div className="eyebrow">INCIDENT REPLAY</div><p>{before.toFixed(1)} s before <span className="meta-separator"/> {after.toFixed(1)} s after detection</p></div><div className="replay-clock"><strong className="mono" data-testid="replay-clock">{timeLabel(cursor)}.{String(Math.floor(cursor%1000/100))}</strong><span className="mono">{relativeTime(cursor,incident.detectedAt)}</span></div></div>
       <div className="replay-controls"><button className="button primary" onClick={playing?()=>setPlaying(false):startPlayback}>{playing?<Pause size={15}/>:<Play size={15}/>} {playing?'Pause replay':'Replay incident'}</button><button className="button icon-button" aria-label="Rewind replay" onClick={()=>{setPlaying(false);setCursor(first);}}><RotateCcw size={16}/></button><div className="scrubber"><input type="range" aria-label="Replay position" min={first} max={last} step={100} value={Math.min(cursor,last)} onChange={e=>{setPlaying(false);setCursor(Number(e.target.value));}}/><div className="scrubber-labels mono"><span>{relativeTime(first,incident.detectedAt)}</span><button onClick={()=>{setPlaying(false);setCursor(incident.detectedAt);}}>Jump to detection</button><span>{relativeTime(last,incident.detectedAt)}</span></div></div><label className="speed-select"><span className="sr-only">Playback speed</span><select aria-label="Playback speed" value={speed} onChange={e=>setSpeed(Number(e.target.value))}><option value={0.5}>0.5×</option><option value={1}>1×</option><option value={2}>2×</option></select></label></div>
       {!incident.captureComplete||before<29.9||gap?<div className="replay-note">{gap?'Telemetry gap: holding the last received state. ':''}{capturing?'Capturing post-event telemetry in the background. ':!incident.captureComplete?(canResume?'Partial recording: resume the source session to capture more post-event data. ':'Partial recording: the source session ended before post-event capture completed. '):''}{before<29.9?'Less than 30 seconds of pre-event history was available.':''}</div>:null}
+    </section>
+    <section className="recording-transfer" aria-label="Incident data export">
+      <div className="recording-transfer-heading"><div><h2>Analyze this recording</h2><p>Download received packets for Excel or Python. Units are in the headers; missing packets stay missing. Simulated telemetry only.</p></div>
+        <button className="button quiet" onClick={exportCsv}><Download size={15}/> Export telemetry CSV</button>
+      </div>
+      {exportError ? <p className="transfer-error" role="alert">{exportError}</p> : null}
+      {exportMessage ? <p className="transfer-message" role="status">{exportMessage}</p> : null}
     </section>
     <Metrics sample={sample}/>
     <div className="section-label"><h2>Recorded telemetry</h2><span><i className="cursor-key"/> Replay cursor <span className="meta-separator"/> <i className="detection-key"/> Detection</span></div>

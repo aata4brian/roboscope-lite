@@ -2,7 +2,26 @@
 
 This document separates observed behavior from checks that remain outstanding.
 Source is published in the public `aata4brian/roboscope-lite` GitHub repository.
-There is no verified public Vercel deployment yet.
+Public demo: https://roboscope-lite.vercel.app/. Live smoke checks on 13 October
+2026 verified anonymous access, all three fault detections, motor-stall replay at
+2×, and reload persistence. Hardware validation remains outstanding.
+
+## CSV export — 13 October 2026
+
+The incident page now exports the received packet window as CSV. Six new tests
+check all telemetry values for all three fault types, complete UTC dates across
+midnight, relative detection time, sequence gaps, partial capture status, and
+formula-like imported IDs without changing negative numeric measurements.
+The browser suite additionally downloads CSV through the actual button for each
+fault and compares it with the recorded packet window; it verifies that storage
+is unchanged. It also checks the export panel at the existing responsive widths.
+
+Local checks: 29 behavioral tests passed. TypeScript/build and remote CI results
+are recorded in the PR. Do not treat a preview build as verification that this
+feature is already released on the public demo.
+
+Format references: [RFC 4180](https://www.rfc-editor.org/rfc/rfc4180) and
+[OWASP CSV Injection](https://owasp.org/www-community/attacks/CSV_Injection).
 
 ## Dependency maintenance — 13 October 2026
 

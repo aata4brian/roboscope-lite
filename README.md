@@ -10,7 +10,7 @@ Built by **Moch. Brian Mursyidan Baldan**, Robotics and Artificial Intelligence 
 
 ## Live Demo
 
-The application is ready to run locally. A verified public deployment is not available yet. See [Deployment](#deployment) for the Vercel setup.
+[Open RoboScope Lite](https://roboscope-lite.vercel.app/). Public access, all three fault detections, motor-stall replay at 2×, and reload persistence were verified on 13 October 2026. This is simulated telemetry, not a hardware connection.
 
 ## What It Does
 
@@ -22,6 +22,7 @@ The application is ready to run locally. A verified public deployment is not ava
 - Synchronizes the chart cursors, metrics, and robot position during replay.
 - Keeps the current session and the latest 12 incidents in browser storage.
 - Exports and imports validated JSON recordings for replay in another browser.
+- Downloads incident telemetry as CSV for plotting in Excel or Python.
 
 There is no account setup, backend database, API key, or external AI service.
 
@@ -53,6 +54,31 @@ in memory.
 ![Import review on desktop](docs/screenshots/recording-import-desktop.png)
 
 See [the short demo guide](docs/DEMO.md) and [verification results](docs/QA.md).
+
+## Analyze an incident outside the app
+
+Open an incident and click **Export telemetry CSV**. The file contains one row
+per received packet, all 17 telemetry fields, UTC dates, seconds relative to
+detection, and incident metadata. Units appear in the headers. Negative relative
+time means before detection; zero marks the detected packet.
+
+Network sequence gaps are preserved. Nothing is interpolated, resampled, or
+rounded. `telemetry_source` is always `simulation`; `capture_complete` describes
+the capture when you clicked export. If capture is still running, export again
+after it finishes. CSV is for analysis; JSON is still required for app replay.
+The download is generated on your device and does not change the stored recording.
+Formula-like text IDs are prefixed with an apostrophe for spreadsheet opening;
+ordinary IDs and numeric measurements retain their values. This is not a guarantee
+for every spreadsheet application's save/reopen behavior.
+
+In Excel, import as comma-separated UTF-8 data if your locale expects semicolons.
+In Python, for example:
+
+```python
+import pandas as pd
+recording = pd.read_csv('roboscope-incident.csv')  # use the downloaded filename
+recording.plot(x='time_since_detection_s', y=['left_motor_current_a', 'right_motor_current_a'])
+```
 
 ## Architecture
 
@@ -163,6 +189,8 @@ No environment variables are required. The small `scripts/dev.mjs` adapter accep
 | `src/app/incidents/[id]/page.tsx` | Dynamic incident route |
 | `tests/pipeline.test.ts` | Behavioral tests for the full pipeline |
 | `tests/recording.test.ts` | Recording transfer and invalid-file tests |
+| `src/lib/incident-csv.ts` | Received-packet CSV export with units |
+| `tests/incident-csv.test.ts` | CSV data fidelity, gaps, and partial capture tests |
 | `tests/browser.mjs` | Production-server browser transfer/replay checks |
 | `docs/screenshots/` | Actual screenshots captured during browser QA |
 
@@ -213,7 +241,7 @@ Suggested topics: `robotics`, `robotics-simulation`, `telemetry`, `anomaly-detec
 
 ## Roadmap
 
-The core demo is intentionally small. Next work: verify a deployment, calibrate against measured motor data, and add an explicit no-packet timeout detector. These are not implemented features. Production dependencies were audited after the Next.js 16.4.0 update; see [QA notes](docs/QA.md) and the [progress backlog](docs/PROGRESS.md).
+The core demo is intentionally small. Next work: calibrate against measured motor data and add an explicit no-packet timeout detector. These are not implemented features. Production dependencies were audited after the Next.js 16.4.0 update; see [QA notes](docs/QA.md) and the [progress backlog](docs/PROGRESS.md).
 
 ## License
 
