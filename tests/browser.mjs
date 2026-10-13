@@ -3,6 +3,7 @@ import { spawn } from 'node:child_process';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
 import { decodeSession, STORAGE_KEY, MAX_RECORDING_BYTES } from '../src/lib/storage.ts';
+import { incidentCsv } from '../src/lib/incident-csv.ts';
 
 // Test against the production server; this script owns and stops its server process.
 const port = 3100;
@@ -17,9 +18,9 @@ const errors = [];
 const pass = name => { results.push(name); console.log(`PASS ${name}`); };
 const file = raw => ({ name: 'recording.json', mimeType: 'application/json', buffer: Buffer.from(raw) });
 const saved = page => page.evaluate(key => JSON.parse(localStorage.getItem(key)), STORAGE_KEY);
-async function download(page) {
+async function download(page, name = 'Export JSON') {
   const promise = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Export JSON' }).click();
+  await page.getByRole('button', { name, exact: true }).click();
   const stream = await (await promise).createReadStream();
   const chunks = [];
   for await (const chunk of stream) chunks.push(chunk);
@@ -74,6 +75,11 @@ try {
     await target.page.getByRole('button', { name: 'Resume simulation' }).waitFor();
     assert.deepEqual(await saved(target.page), recording);
     await target.page.getByRole('link', { name: new RegExp(`Open ${label} incident`) }).click();
+    const priorStorage = await saved(target.page);
+    assert.equal(await download(target.page, 'Export telemetry CSV'), incidentCsv(recording.incidents[0]));
+    await target.page.getByRole('status').filter({ hasText: `Exported ${recording.incidents[0].samples.length} received packets` }).waitFor();
+    assert.deepEqual(await saved(target.page), priorStorage);
+    pass(`${label}: actual CSV download preserves received telemetry and does not change the recording`);
     await target.page.getByRole('button', { name: 'Jump to detection' }).click();
     assert.equal(Number(await target.page.getByRole('slider', { name: 'Replay position' }).inputValue()), recording.incidents[0].detectedAt);
     await target.page.getByRole('button', { name: 'Rewind replay' }).click();

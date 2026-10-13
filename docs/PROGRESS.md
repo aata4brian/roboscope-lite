@@ -1,45 +1,33 @@
-# Progres dan pekerjaan berikutnya
+# Progres RoboScope Lite
 
-Checkpoint: 13 Oktober 2026, branch `improve/recording-transfer`.
-Mulai dari main `6ee4ad25afa33e612a0778c2d5000971b8aebeaa`; tidak ada PR aktif
-atau perubahan lokal pengguna saat checkout. Tidak ditemukan AGENTS.md.
+Checkpoint: 13 Oktober 2026. Branch kerja: `improve/incident-csv`.
+Dasar: main `2ab49b0`. Tidak ada perubahan lokal pengguna saat mulai.
 
-## Selesai di branch ini
+## Sudah selesai
 
-- Ekspor/impor JSON, pratinjau sebelum penggantian, dan pembatalan tanpa perubahan.
-- File rusak/terlalu besar ditolak; ID, urutan paket, waktu, dan state detector diperiksa.
-- Rekaman aktif dan arsip tetap dapat diekspor saat penyimpanan browser penuh.
-- Perbaikan halaman melebar pada ponsel karena elemen tersembunyi di tabel.
-- 23 tes perilaku; 9 pemeriksaan browser; typecheck/build; screenshot desktop/mobile.
-- CI menjalankan tes browser, panduan demo singkat, dan catatan hasil pemeriksaan.
-- Next.js 16.2.6 diperbarui ke 16.4.0 beserta dependensi transitif yang ditambal.
-- Audit dependensi produksi turun dari 6 advisori menjadi 0; 23 tes, typecheck,
-  build produksi, dan pemeriksaan diff lulus setelah instalasi bersih.
+- PR #1 transfer JSON sudah masuk main; CI pasca-merge lulus.
+- Brian sudah deploy https://roboscope-lite.vercel.app/.
+- Demo publik diuji langsung: tiga gangguan, rekaman selesai, replay motor-stall
+  pada 2×, jump to detection, serta rekaman bertahan setelah reload.
+- PR portofolio #1 sudah masuk main (`fa67133`); dua build Vercel lulus.
+- Preview portofolio diperiksa di desktop: gambar, filter, bahasa, tema, dan
+  studi kasus. Produksi tetap memakai holding page; privasi tidak diubah.
 
-## Lanjutkan dari sini
+## Pekerjaan branch ini
 
-1. Periksa CI PR ini, termasuk sembilan pemeriksaan browser, dan gabungkan hanya
-   setelah checks lulus. Browser lokal belum dapat diulang karena executable
-   Chromium tidak tersedia dan unduhan CDN menghasilkan arsip kosong.
-2. Verifikasi/import target RoboScope di Vercel tanpa membuat duplikat. Daftar
-   proyek tim saat run ini hanya Amerta Pertiwi, Amerta Pertiwi v2, dan RxTwin;
-   belum ada RoboScope. Tidak membuat deployment pada run ini.
-3. Selesaikan QA playback dengan waktu nyata dan interaksi slider keyboard/drag.
-4. Masukkan hasil dan demo terverifikasi ke portofolio setelah akses target jelas.
+- Ekspor paket telemetri insiden ke CSV, tanpa interpolasi atau pembulatan.
+- Header mencantumkan satuan, waktu UTC, waktu relatif deteksi, dan status capture.
+- Data ditandai simulasi. Unduhan tidak mengubah rekaman atau replay.
+- 29 tes perilaku lulus; CI juga menguji unduhan CSV lewat tombol untuk tiga fault.
+- README dan panduan demo diperbarui sesuai deployment publik yang sudah diuji.
 
-## Temuan lintas repo, tanpa edit
+## Berikutnya
 
-- Repo portofolio tetap private. Main dan portfolio-preview menunjuk ke
-  f4b020ac89fbf3d010f2abc56c3189513502787e. Dua ID proyek Vercel yang tercatat
-  sebelumnya mengembalikan 404 dan tidak tampil dalam daftar tim yang sama.
-- RxTwin tetap private. Main 3ce1f08dc668b9d634acbae30579d5dc676d0cd0;
-  PR #3 dokumentasi masih terbuka. Branch scientific-workbench dan ui-qa masih
-  ada; jangan mengerjakan ulang atau menimpanya. Proyek Vercel RxTwin ditemukan,
-  tetapi status READY bukan bukti bahwa alur simulasinya bekerja.
-- Riwayat percakapan menyebut transfer RoboScope pernah dikerjakan Oktober,
-  namun fitur itu tidak ada di branch GitHub yang tersedia. Pencarian hasil lama
-  hanya menemukan paket September. Branch ini menyimpan implementasi yang
-  teruji dari source GitHub terkini, bukan mengasumsikan hasil lama sudah terbit.
+- Periksa CI dan preview sebelum merge/release fitur CSV.
+- Lengkapi QA playback waktu nyata 0.5×/1× serta slider keyboard/drag.
+- Tentukan jalur validasi hardware sebelum membuat klaim untuk robot fisik.
+- Proyek portofolio berikutnya yang Brian pilih: Predictive Maintenance for
+  Aircraft Engines. Jangan mengklaim dataset, training, atau hasil sebelum diuji.
 
-Jangan menyentuh eksperimen akademik/laptop/server. Jangan mengubah privasi repo
-atau perlindungan website. Panduan dan hasil tes tersedia di README, QA, dan DEMO.
+Jangan mengubah privasi repo atau perlindungan website. Jangan menyentuh
+folder eksperimen akademik, laptop, atau server di luar tugas ini.
