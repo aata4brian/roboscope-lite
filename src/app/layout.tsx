@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { SessionProvider } from '@/components/session-provider';
 import { Shell } from '@/components/shell';
 import './globals.css';
+import './workbench.css';
 export const metadata: Metadata = {
   title: 'RoboScope Lite — Robot telemetry & incident replay',
   description: 'Replay robot failures. Understand what went wrong. A deterministic robot telemetry, fault detection, and incident replay playground.',
