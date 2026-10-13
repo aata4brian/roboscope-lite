@@ -31,7 +31,6 @@ async function newPage() {
   const page = await context.newPage();
   page.on('pageerror', error => errors.push(error.message));
   await page.clock.install({ time: new Date('2026-10-13T00:00:00Z') });
-  await page.clock.pauseAt(new Date('2026-10-13T00:00:01Z'));
   await page.goto(base);
   await page.getByRole('button', { name: 'Start simulation' }).waitFor();
   return { context, page };
@@ -81,6 +80,9 @@ try {
     await target.page.getByRole('status').filter({ hasText: `Exported ${recording.incidents[0].samples.length} received packets` }).waitFor();
     assert.deepEqual(await saved(target.page), priorStorage);
     pass(`${label}: actual CSV download preserves received telemetry and does not change the recording`);
+    // Next.js navigation and download handlers must finish before freezing timers.
+    const now = await target.page.evaluate(() => Date.now());
+    await target.page.clock.pauseAt(new Date(now + 1000));
     await target.page.getByRole('button', { name: 'Jump to detection' }).click();
     assert.equal(Number(await target.page.getByRole('slider', { name: 'Replay position' }).inputValue()), recording.incidents[0].detectedAt);
     await target.page.getByRole('button', { name: 'Rewind replay' }).click();
